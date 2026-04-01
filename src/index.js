@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import * as crmSync from './crmSync.js';
 import cron from 'node-cron';
 import { Bot, InlineKeyboard, Keyboard } from 'grammy';
 import { getContent, refreshContent } from './googleSheetsContent.js';
@@ -478,6 +479,7 @@ bot.on('message:web_app_data', async (ctx) => {
   const withJourney = await appendJourneyStep(user.userId, 'Прошёл квиз');
   await addEvent({ type: 'silent', eventName: 'Прошёл квиз', userId: user.userId, stopor: user.stoporLabel });
   await sendDuplicateResult(ctx, withJourney || user, content);
+  await crmSync.onQuizResult(user, payload);
   await maybeSendVslAfterResult(user.userId, stoporLabel);
 });
 
@@ -500,6 +502,7 @@ bot.callbackQuery(/^action:(voice|refine|call)$/, async (ctx) => {
   await addEvent({ type: 'button', eventName: 'Нажал кнопку', userId: user.userId, stopor: user.stoporLabel, button: buttonText });
   await ctx.answerCallbackQuery();
   await sendAdminAlert('Нажал кнопку', userWithJourney || user, content, { button: buttonText });
+  await crmSync.onButtonClick(userWithJourney || user, buttonText);
 
   if (action === 'voice') {
     await markVoiceRequested(user.userId);
@@ -572,6 +575,7 @@ bot.callbackQuery(/^refine:(\d+):(\d+)$/, async (ctx) => {
     const freshUser = (await getUser(user.userId)) || withJourney || user;
     await sendAdminAlert('Нажал кнопку', freshUser, content, { button: 'Завершил доп-квиз' });
     await sendSuperanswer(ctx, freshUser, content);
+    await crmSync.onRefineComplete(freshUser);
   }
 });
 
@@ -591,6 +595,7 @@ bot.hears(/^хочу$/i, async (ctx) => {
   await markEngaged(user.userId);
   const fresh = await getUser(user.userId);
   await sendAdminAlert('Написал хочу', fresh || user, content, { button: 'Написал хочу' });
+  await crmSync.onTextMessage(fresh || user, 'хочу');
 });
 
 bot.on('message:text', async (ctx, next) => {
@@ -615,6 +620,7 @@ bot.on('message:text', async (ctx, next) => {
   };
   await sendText(ctx, content.messageEvents['Не распознал']?.text || 'Принял. Передам Андрею.');
   await sendAdminAlert('Не распознан текст', currentUser, content, { text });
+  await crmSync.onTextMessage(currentUser, text);
 });
 
 async function processFollowups() {
