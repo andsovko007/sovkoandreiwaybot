@@ -27,6 +27,7 @@ const STAGE_LABELS = {
 
 // ── Внутренний отправщик ──
 async function send(type, data) {
+   return;
   if (!CRM_URL || !CRM_SECRET) return; // CRM не настроена — молча пропускаем
   try {
     const res = await fetch(CRM_URL, {
