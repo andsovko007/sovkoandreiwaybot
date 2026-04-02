@@ -104,9 +104,10 @@ export async function onQuizResult(user, payload) {
 /**
  * Вызывать после нажатия кнопки (voice / call / refine)
  */
-export async function onButtonClick(user, buttonText) {
+export async function onButtonClick(user, buttonText, stageLabelOverride) {
   try {
     const base = buildUserBase(user);
+    if (stageLabelOverride) base.stage_label = stageLabelOverride;
 
     await send('upsert_user', {
       ...base,
