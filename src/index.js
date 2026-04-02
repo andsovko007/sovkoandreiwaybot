@@ -502,7 +502,8 @@ bot.callbackQuery(/^action:(voice|refine|call)$/, async (ctx) => {
   await addEvent({ type: 'button', eventName: 'Нажал кнопку', userId: user.userId, stopor: user.stoporLabel, button: buttonText });
   await ctx.answerCallbackQuery();
   await sendAdminAlert('Нажал кнопку', userWithJourney || user, content, { button: buttonText });
-   crmSync.onButtonClick(userWithJourney || user, buttonText);
+   const newStageLabel = action === 'voice' ? 'Запросил голосовое' : action === 'call' ? 'Запросил разбор' : 'Греется';
+crmSync.onButtonClick(userWithJourney || user, buttonText, newStageLabel);
 
   if (action === 'voice') {
     await markVoiceRequested(user.userId);
